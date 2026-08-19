@@ -49,9 +49,12 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
-      # 7. AJUSTADO: Gera o plano técnico de infraestrutura simulando localmente (sem a flag inválida)
+      # 7. AJUSTADO: Injeta credenciais mockadas para gerar o plano estático sem precisar de chaves reais da AWS
       - name: Terraform Plan
         run: terraform plan -refresh=false -out=tfplan
+        env:
+          AWS_ACCESS_KEY_ID: "mock_key_id"
+          AWS_SECRET_ACCESS_KEY: "mock_secret_key"
 
       # 8. Converte o binário do plano para JSON legível por humanos e pelo OPA
       - name: Converter Plano para JSON
