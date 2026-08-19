@@ -49,12 +49,14 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
-      # 7. AJUSTADO: Injeta credenciais mockadas para gerar o plano estático sem precisar de chaves reais da AWS
+      # 7. CORRIGIDO: Injeta credenciais mockadas e desabilita validação interativa/interações com a API AWS
       - name: Terraform Plan
-        run: terraform plan -refresh=false -out=tfplan
+        run: terraform plan -refresh=false -out=tfplan -lock=false
         env:
           AWS_ACCESS_KEY_ID: "mock_key_id"
           AWS_SECRET_ACCESS_KEY: "mock_secret_key"
+          TF_INPUT: "false"
+          TF_IN_AUTOMATION: "true"
 
       # 8. Converte o binário do plano para JSON legível por humanos e pelo OPA
       - name: Converter Plano para JSON
