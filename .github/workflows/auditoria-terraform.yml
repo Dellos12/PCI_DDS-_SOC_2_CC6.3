@@ -28,25 +28,41 @@ jobs:
         with:
           version: latest
 
-      # 4. Inicializa o Terraform
+      # 4. Inicializa o Terraform isolando o backend
       - name: Terraform Init
-        run: terraform init
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: terraform init -backend=false
 
-      # 5. Cria o plano técnico e exporta em formato binário econômico (tfplan)
+      # 5. Valida a sintaxe e aponta exatamente o erro se falhar
+      - name: Terraform Format Check
+        run: |
+          UNFORMATTED=$(terraform fmt -list=true -check -recursive 2>/dev/null || true)
+          if [ -n "$UNFORMATTED" ]; then
+            echo "❌ Os seguintes arquivos Terraform não estão formatados:"
+            echo "$UNFORMATTED"
+            echo ""
+            echo "Para corrigir, rode localmente no seu terminal:"
+            echo "terraform fmt -recursive && git add . && git commit -m \"chore: terraform fmt\" && git push"
+            exit 1
+          fi
+
+      # 6. Valida se não há erros de lógica ou blocos inválidos
+      - name: Terraform Validate
+        run: terraform validate
+
+      # 7. CORRIGIDO: Injeta credenciais mockadas e desabilita validação interativa/interações com a API AWS
       - name: Terraform Plan
-        run: terraform plan -out=tfplan
+        run: terraform plan -refresh=false -out=tfplan -lock=false
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "mock_key_id"
+          AWS_SECRET_ACCESS_KEY: "mock_secret_key"
+          TF_INPUT: "false"
+          TF_IN_AUTOMATION: "true"
 
-      # 6. Converte o binário do plano para JSON legível por humanos e pelo OPA
+      # 8. Converte o binário do plano para JSON legível por humanos e pelo OPA
       - name: Converter Plano para JSON
         run: terraform show -json tfplan > tfplan.json
 
-      # 7. A VÁLVULA DE SEGURANÇA: OPA avalia o plano contra as regras de SOC 2 / PCI-DSS
+      # 9. A VÁLVULA DE SEGURANÇA: OPA avalia o plano contra as regras de SOC 2 / PCI-DSS
       - name: Executar Auditoria OPA
         run: |
           echo "🔍 Iniciando auditoria automatizada de conformidade..."

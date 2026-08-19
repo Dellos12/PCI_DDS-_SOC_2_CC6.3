@@ -3,13 +3,13 @@ package main
 # Por padrão, o plano é bloqueado
 default allow = false
 
-# Permite o deploy apenas se não houver NENHUMA violação
-allow {
+# ✅ SINTAXE CORRIGIDA: Adicionado o "if" obrigatório antes do corpo da regra
+allow if {
     count(violations) == 0
 }
 
-# REGRA DE AUDITORIA: Bloqueio de SSH Aberto para o Mundo (SOC 2 CC6.1 / PCI-DSS 1.2)
-violations[msg] {
+# ✅ SINTAXE CORRIGIDA: Uso do "contains" e "if" para regras de conjunto parcial (Set Rules)
+violations contains msg if {
     # Procura por mudanças em recursos do tipo Security Group no plano
     resource := input.resource_changes[_]
     resource.type == "aws_security_group"

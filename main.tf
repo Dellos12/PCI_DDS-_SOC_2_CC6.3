@@ -9,6 +9,11 @@ terraform {
 
 provider "aws" {
   region = "us-east-1"
+
+  # ✅ CORREÇÃO: Ignora a validação de credenciais reais para permitir o plano estático no GitHub Actions
+  skip_credentials_validation = true
+  skip_requesting_account_id  = true
+  skip_metadata_api_check     = true
 }
 
 # Criação do VPC (Rede isolada para o processo econômico)
@@ -21,26 +26,28 @@ resource "aws_vpc" "vpc_economia" {
   }
 }
 
-# A ENGRENAGEM CRÍTICA: O Security Group (A nossa muralha)
+# A ENGRENAGEM CORRIGIDA, BLINDADA E COM NOME VÁLIDO
 resource "aws_security_group" "sg_auditado" {
-  name        = "sg-vulneravel-auditoria"
+  # ✅ CORREÇÃO: Removido o "sg-" inicial para cumprir a regra da AWS/Terraform
+  name_prefix = "vulneravel-auditoria-"
   description = "Security Group de teste para validacao do OPA"
   vpc_id      = aws_vpc.vpc_economia.id
 
-  # ❌ VIOLAÇÃO CRÍTICA DE SEGURANÇA (SOC 2 CC6.1 / PCI-DSS 1.2)
-  # Este bloco abre a porta SSH (22) para QUALQUER IP do planeta terra (0.0.0.0/0)
+  # ✅ CONFORMIDADE ATENDIDA (SOC 2 / PCI-DSS)
   ingress {
-    description      = "Acesso SSH público"
-    from_port        = 22
-    to_port          = 22
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"] 
+    description = "Acesso SSH restrito a rede interna"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.vpc_economia.cidr_block]
   }
 
   egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
+
+  depends_on = [aws_vpc.vpc_economia]
 }
