@@ -9,6 +9,11 @@ terraform {
 
 provider "aws" {
   region = "us-east-1"
+
+  # ✅ CORREÇÃO: Ignora a validação de credenciais reais para permitir o plano estático no GitHub Actions
+  skip_credentials_validation = true
+  skip_requesting_account_id  = true
+  skip_metadata_api_check     = true
 }
 
 # Criação do VPC (Rede isolada para o processo econômico)
