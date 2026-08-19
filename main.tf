@@ -33,7 +33,7 @@ resource "aws_security_group" "sg_auditado" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vpc_economia.cidr_block] 
+    cidr_blocks = [aws_vpc.vpc_economia.cidr_block]
   }
 
   egress {
