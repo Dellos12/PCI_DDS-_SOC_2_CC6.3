@@ -32,23 +32,32 @@ jobs:
       - name: Terraform Init
         run: terraform init -backend=false
 
-      # ✅ NOVO PASSO: Valida se a sintaxe do HCL está bem escrita
+      # ✅ OPÇÃO A IMPLEMENTADA: Valida a sintaxe e aponta exatamente o erro se falhar
       - name: Terraform Format Check
-        run: terraform fmt -check
+        run: |
+          UNFORMATTED=$(terraform fmt -list=true -check -recursive 2>/dev/null || true)
+          if [ -n "$UNFORMATTED" ]; then
+            echo "❌ Os seguintes arquivos Terraform não estão formatados:"
+            echo "$UNFORMATTED"
+            echo ""
+            echo "Para corrigir, rode localmente no seu terminal:"
+            echo "terraform fmt -recursive && git add . && git commit -m \"chore: terraform fmt\" && git push"
+            exit 1
+          fi
 
-      # ✅ NOVO PASSO: Valida se não há erros de lógica ou blocos inválidos
+      # 5. Valida se não há erros de lógica ou blocos inválidos
       - name: Terraform Validate
         run: terraform validate
 
-      # 5. Gera o plano técnico de infraestrutura
+      # 6. Gera o plano técnico de infraestrutura
       - name: Terraform Plan
         run: terraform plan -backend=false -out=tfplan
 
-      # 6. Converte o binário do plano para JSON legível por humanos e pelo OPA
+      # 7. Converte o binário do plano para JSON legível por humanos e pelo OPA
       - name: Converter Plano para JSON
         run: terraform show -json tfplan > tfplan.json
 
-      # 7. A VÁLVULA DE SEGURANÇA: OPA avalia o plano contra as regras de SOC 2 / PCI-DSS
+      # 8. A VÁLVULA DE SEGURANÇA: OPA avalia o plano contra as regras de SOC 2 / PCI-DSS
       - name: Executar Auditoria OPA
         run: |
           echo "🔍 Iniciando auditoria automatizada de conformidade..."
