@@ -21,9 +21,10 @@ resource "aws_vpc" "vpc_economia" {
   }
 }
 
-# A ENGRENAGEM CORRIGIDA: O Security Group Protegido
+# A ENGRENAGEM CORRIGIDA E BLINDADA
 resource "aws_security_group" "sg_auditado" {
-  name        = "sg-vulneravel-auditoria"
+  # ✅ AJUSTE 1: Evita colisão de nomes adicionando um sufixo aleatório automático
+  name_prefix = "sg-vulneravel-auditoria-"
   description = "Security Group de teste para validacao do OPA"
   vpc_id      = aws_vpc.vpc_economia.id
 
@@ -34,7 +35,7 @@ resource "aws_security_group" "sg_auditado" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vpc_economia.cidr_block] # Utiliza dinamicamente o CIDR da VPC
+    cidr_blocks = [aws_vpc.vpc_economia.cidr_block] 
   }
 
   egress {
@@ -43,4 +44,7 @@ resource "aws_security_group" "sg_auditado" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  # ✅ AJUSTE 2: Garante que a VPC nasça 100% antes de tentar ler o CIDR block dela
+  depends_on = [aws_vpc.vpc_economia]
 }
