@@ -21,9 +21,10 @@ resource "aws_vpc" "vpc_economia" {
   }
 }
 
-# A ENGRENAGEM CORRIGIDA E BLINDADA
+# A ENGRENAGEM CORRIGIDA, BLINDADA E COM NOME VÁLIDO
 resource "aws_security_group" "sg_auditado" {
-  name_prefix = "sg-vulneravel-auditoria-"
+  # ✅ CORREÇÃO: Removido o "sg-" inicial para cumprir a regra da AWS/Terraform
+  name_prefix = "vulneravel-auditoria-"
   description = "Security Group de teste para validacao do OPA"
   vpc_id      = aws_vpc.vpc_economia.id
 
